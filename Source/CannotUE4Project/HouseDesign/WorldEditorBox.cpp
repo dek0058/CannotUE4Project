@@ -16,12 +16,16 @@ AWorldEditorBox::AWorldEditorBox()
 	WorldEditorComponent->SetupAttachment(RootComponent);
 
 	//! Default Settgins
-	/*PrimaryActorTick.TickGroup = TG_PrePhysics;
+	PrimaryActorTick.TickGroup = TG_PrePhysics;
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.SetTickFunctionEnable(true);
-	bAsyncPhysicsTickEnabled = false;*/
+	bAsyncPhysicsTickEnabled = false;
 
+	bNetLoadOnClient = false;
+
+	// will be updated in PostInitProperties
+	SetCanBeDamaged(false);
 }
 
 void AWorldEditorBox::PreInitializeComponents()
@@ -30,14 +34,25 @@ void AWorldEditorBox::PreInitializeComponents()
 
 }
 
-void AWorldEditorBox::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
 void AWorldEditorBox::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction)
 {
 	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
 
+	//FColor BoxColor = FColor::Red;
+	//DrawDebugBox(GetWorld(), GetActorLocation() + FVector(0.0F, 0.0F, 25.0F), FVector(500.0F, 500.0F, 25.0F), FQuat::Identity, BoxColor, true, -1.0f, 0, 2.0f);
+
 }
+
+void AWorldEditorBox::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+
+}
+
+void AWorldEditorBox::BeginPlay()
+{
+	Super::BeginPlay();
+
+}
+

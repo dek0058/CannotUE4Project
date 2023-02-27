@@ -4,6 +4,8 @@
 #include "DynamicMeshBuilder.h"
 
 
+#if WITH_EDITOR
+
 namespace
 {
 
@@ -117,57 +119,6 @@ void DrawGridRectangle_Internal(FPrimitiveDrawInterface* PDI, const FMatrix& Mat
 	}
 }
 
-
-/*const FVector X = Matrix.GetScaledAxis(EAxis::X);
-	const FVector Y = Matrix.GetScaledAxis(EAxis::Y);
-	const FVector Z = Matrix.GetScaledAxis(EAxis::Z);
-
-	const FVector Origin = Matrix.GetOrigin();
-	const FVector Extent = Extent;
-
-	const FVector Corners[4] =
-	{
-		Origin + X * Extent.X + Y * Extent.Y,
-		Origin + X * Extent.X - Y * Extent.Y,
-		Origin - X * Extent.X - Y * Extent.Y,
-		Origin - X * Extent.X + Y * Extent.Y,
-	};
-
-	for (int32 i = 0; i < 4; ++i)
-	{
-		PDI->DrawLine(Corners[i], Corners[(i + 1) % 4], Color, DepthPriority, Thickness, DepthBias);
-	}*/
-	/*
-	// Get the camera and object actors
-	AActor* CameraActor = // Get the camera actor
-	AActor* ObjectActor = // Get the object actor
-
-	// Get the positions of the camera and object
-	FVector CameraPos = CameraActor->GetActorLocation();
-	FVector ObjectPos = ObjectActor->GetActorLocation();
-
-	// Get the forward vector of the camera
-	FVector CameraForward = CameraActor->GetActorForwardVector();
-
-	// Calculate the vector between the camera and object
-	FVector CameraToObject = ObjectPos - CameraPos;
-
-	// Normalize the vector between the camera and object
-	CameraToObject.Normalize();
-
-	// Calculate the dot product of the normalized vector between the camera and object and the forward vector of the camera
-	float DotProduct = FVector::DotProduct(CameraToObject, CameraForward);
-
-	// Check if the dot product is greater than a threshold value
-	float Threshold = 0.9f; // Adjust this value as needed
-	if (DotProduct > Threshold)
-	{
-		// Camera is looking at object
-	}
-
-
-	*/
-
 }
 
 //! FWorldEditorSceneProxy
@@ -180,20 +131,12 @@ public:
 		: FPrimitiveSceneProxy(InComponent)
 		, BorderColor(InComponent->BorderColor)
 		, GridColor(InComponent->GridColor)
+		, Extent(InComponent->GetExtent())
 		, Thickness(InComponent->Thickness)
 		, DashSize(InComponent->DashSize)
-		, GridSize(InComponent->GridSize)
+		, GridSize(InComponent->GetGridSize())
 	{
 		bWantsSelectionOutline = false;
-
-		float Interval = FMath::Max(GridSize, 1.0F);
-		int32 X, Y, Z;
-
-		X = static_cast<int32>(InComponent->Extent.X / Interval);
-		Y = static_cast<int32>(InComponent->Extent.Y / Interval);
-		Z = static_cast<int32>(InComponent->Extent.Z / Interval);
-
-		Extent = FVector(X * Interval, Y * Interval, Z * Interval);
 	}
 
 	virtual SIZE_T GetTypeHash() const override
@@ -205,11 +148,12 @@ public:
 	virtual void GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const override
 	{
 		const FMatrix& LTW = GetLocalToWorld();
-
 		const FVector X = LTW.GetScaledAxis(EAxis::X);
 		const FVector Y = LTW.GetScaledAxis(EAxis::Y);
 		const FVector Z = LTW.GetScaledAxis(EAxis::Z);
 		const FVector WorldOrigin = LTW.GetOrigin();
+
+		const FVector HalfExtent = Extent * 0.5F;
 
 		for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
 		{
@@ -218,118 +162,26 @@ public:
 				continue;
 			}
 
+			const FSceneView* SceneView = Views[ViewIndex];
+			const FVector ViewForwardVector = SceneView->GetViewDirection();
+
 			FPrimitiveDrawInterface* PDI = Collector.GetPDI(ViewIndex);
 			const FLinearColor BorderLinearColor = GetViewSelectionColor(BorderColor, *Views[ViewIndex], false, false, false, IsIndividuallySelected());
 			const FLinearColor GridLinearColor = GetViewSelectionColor(GridColor, *Views[ViewIndex], false, false, false, IsIndividuallySelected());
 
-			FVector HalfExtent = Extent * 0.5F;
-
-			const int32 NumVertices = 8;
-			FVector Vertices[8] =
-			{
-				FVector(-HalfExtent.X, -HalfExtent.Y, 0.0F),
-				FVector(HalfExtent.X, -HalfExtent.Y, 0.0F),
-				FVector(-HalfExtent.X, HalfExtent.Y, 0.0F),
-				FVector(HalfExtent.X, HalfExtent.Y, 0.0F),
-				FVector(-HalfExtent.X, -HalfExtent.Y, Extent.Z),
-				FVector(HalfExtent.X, -HalfExtent.Y, Extent.Z),
-				FVector(-HalfExtent.X, HalfExtent.Y, Extent.Z),
-				FVector(HalfExtent.X, HalfExtent.Y, Extent.Z)
-			};
-
 			{	//! Draw Floor
 				DrawGridRectangle_Internal(PDI, LTW, FVector2d(HalfExtent.X, HalfExtent.Y), GridSize, BorderLinearColor, GridLinearColor, DashSize, SDPG_World, Thickness, 0.0F);
 			}
-			
-			{	//! Draw Front Wall
-				DrawGridRectangle_Internal
-				(
-					PDI,
-					(
-						FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 1.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, HalfExtent.Y, -HalfExtent.Z))
-						* FMatrix(X, Z, -Y, FVector::ZeroVector)
-						)
-					.ConcatTranslation(WorldOrigin),
-					FVector2d(HalfExtent.X, HalfExtent.Z),
-					GridSize, BorderLinearColor,
-					GridLinearColor,
-					DashSize,
-					SDPG_World,
-					Thickness,
-					0.0F
-				);
-			}
-
-			{	//! Draw Left Wall
-				DrawGridRectangle_Internal
-				(
-					PDI,
-					(
-						FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 1.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, HalfExtent.Y, -HalfExtent.Z))
-						* FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, -1.0F, 0.0F), FVector::ZeroVector)
-						* FMatrix(Y, -X, Z, FVector::ZeroVector)
-						)
-					.ConcatTranslation(WorldOrigin),
-					FVector2d(HalfExtent.Y, HalfExtent.Z),
-					GridSize, BorderLinearColor,
-					GridLinearColor,
-					DashSize,
-					SDPG_World,
-					Thickness,
-					0.0F
-				);
-			}
-
-			{	//! Draw Back Wall
-				DrawGridRectangle_Internal
-				(
-					PDI,
-					(
-						FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 1.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, -HalfExtent.Y, -HalfExtent.Z))
-						* FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, -1.0F, 0.0F), FVector::ZeroVector)
-						* FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, -1.0F, 0.0F), FVector::ZeroVector)
-						* FMatrix(X, Z, -Y, FVector::ZeroVector)
-					)
-					.ConcatTranslation(WorldOrigin),
-					FVector2d(HalfExtent.X, HalfExtent.Z),
-					GridSize, BorderLinearColor,
-					GridLinearColor,
-					DashSize,
-					SDPG_World,
-					Thickness,
-					0.0F
-				);
-			}
-
-			{	//! Draw Right Wall
-				DrawGridRectangle_Internal
-				(
-					PDI,
-					(
-						FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 1.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, HalfExtent.Y, -HalfExtent.Z))
-						* FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, -1.0F, 0.0F), FVector::ZeroVector)
-						* FMatrix(-Y, X, Z, FVector::ZeroVector)
-						)
-					.ConcatTranslation(WorldOrigin),
-					FVector2d(HalfExtent.Y, HalfExtent.Z),
-					GridSize, BorderLinearColor,
-					GridLinearColor,
-					DashSize,
-					SDPG_World,
-					Thickness,
-					0.0F
-				);
-			}
 
 			{	//! Draw Celling
+				const FMatrix Matrix = FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 1.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, 0.0F, -Extent.Z))
+					* FMatrix(X, -Y, -Z, FVector::ZeroVector)
+					.ConcatTranslation(WorldOrigin);
+
 				DrawGridRectangle_Internal
 				(
 					PDI,
-					(
-						FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 1.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, 0.0F, -Extent.Z))
-						* FMatrix(X, -Y, -Z, FVector::ZeroVector)
-						)
-					.ConcatTranslation(WorldOrigin),
+					Matrix,
 					FVector2d(HalfExtent.X, HalfExtent.Y),
 					GridSize, BorderLinearColor,
 					GridLinearColor,
@@ -340,12 +192,103 @@ public:
 				);
 			}
 
-			// TODO: 벽면은 카메라가 바라보는 방향과 반대라면 보여주지 않아야 한다. (개발 필요)
+			{	//! Draw Front Wall
 
-			//! Calculate Camera Forward
-			/*const FSceneView* SceneView = Views[ViewIndex];
-			FVector CameraForwrd = LTW.TransformPosition(FVector::ZeroVector) - SceneView->ViewActor->GetActorLocation();*/
+				const FMatrix Matrix =
+					FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 1.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, HalfExtent.Z, -HalfExtent.Y))
+					* FMatrix(X, Z, -Y, FVector::ZeroVector)
+					.ConcatTranslation(WorldOrigin);
 
+				const float DotProduct = FVector::DotProduct(Matrix.GetColumn(2), ViewForwardVector);
+				if (DotProduct > 0)
+				{
+					DrawGridRectangle_Internal
+					(
+						PDI,
+						Matrix,
+						FVector2d(HalfExtent.X, HalfExtent.Z),
+						GridSize, BorderLinearColor,
+						GridLinearColor,
+						DashSize,
+						SDPG_World,
+						Thickness,
+						0.0F
+					);
+				}
+			}
+
+			{	//! Draw Left Wall
+				const FMatrix Matrix = FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 1.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, HalfExtent.Z, -HalfExtent.Y))
+					* FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, -1.0F, 0.0F), FVector::ZeroVector)
+					* FMatrix(Y, -X, Z, FVector::ZeroVector)
+					.ConcatTranslation(WorldOrigin);
+
+				const float DotProduct = FVector::DotProduct(-Matrix.GetColumn(1), ViewForwardVector);
+				if (DotProduct > 0)
+				{
+					DrawGridRectangle_Internal
+					(
+						PDI,
+						Matrix,
+						FVector2d(HalfExtent.Y, HalfExtent.Z),
+						GridSize, BorderLinearColor,
+						GridLinearColor,
+						DashSize,
+						SDPG_World,
+						Thickness,
+						0.0F
+					);
+				}
+			}
+
+			{	//! Draw Back Wall
+				const FMatrix Matrix = FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 1.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, -HalfExtent.Z, -HalfExtent.Y))
+					* FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, -1.0F, 0.0F), FVector::ZeroVector)
+					* FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, -1.0F, 0.0F), FVector::ZeroVector)
+					* FMatrix(X, Z, -Y, FVector::ZeroVector)
+					.ConcatTranslation(WorldOrigin);
+
+				const float DotProduct = FVector::DotProduct(Matrix.GetColumn(2), ViewForwardVector);
+				if (DotProduct > 0)
+				{
+					DrawGridRectangle_Internal
+					(
+						PDI,
+						Matrix,
+						FVector2d(HalfExtent.X, HalfExtent.Z),
+						GridSize, BorderLinearColor,
+						GridLinearColor,
+						DashSize,
+						SDPG_World,
+						Thickness,
+						0.0F
+					);
+				}
+			}
+
+			{	//! Draw Right Wall
+				const FMatrix Matrix = FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 1.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, HalfExtent.Z, -HalfExtent.Y))
+					* FMatrix(FVector(1.0F, 0.0F, 0.0F), FVector(0.0F, 0.0F, 1.0F), FVector(0.0F, -1.0F, 0.0F), FVector::ZeroVector)
+					* FMatrix(-Y, X, Z, FVector::ZeroVector)
+					.ConcatTranslation(WorldOrigin);
+
+				const float DotProduct = FVector::DotProduct(-Matrix.GetColumn(1), ViewForwardVector);
+				if (DotProduct > 0)
+				{
+					DrawGridRectangle_Internal
+					(
+						PDI,
+						Matrix,
+						FVector2d(HalfExtent.Y, HalfExtent.Z),
+						GridSize, BorderLinearColor,
+						GridLinearColor,
+						DashSize,
+						SDPG_World,
+						Thickness,
+						0.0F
+					);
+				}
+			}
 		}
 	}
 
@@ -375,8 +318,11 @@ private:
 	float DashSize;
 	float GridSize;
 };
+#endif
 
 //! UWorldEditorComponent
+
+#if WITH_EDITOR
 
 FPrimitiveSceneProxy* UWorldEditorComponent::CreateSceneProxy()
 {
@@ -386,4 +332,33 @@ FPrimitiveSceneProxy* UWorldEditorComponent::CreateSceneProxy()
 FBoxSphereBounds UWorldEditorComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
 	return FBoxSphereBounds{ FBox{ FVector{-Extent.X, -Extent.Y, 0.0F}, Extent } }.TransformBy(LocalToWorld);
+}
+
+#endif
+
+
+bool UWorldEditorComponent::UpdateOverlapsImpl(const TOverlapArrayView* NewPendingOverlaps, bool bDoNotifies, const TOverlapArrayView* OverlapsAtEndLocation)
+{
+	bool bCanSkipUpdateOverlaps = Super::UpdateOverlapsImpl(NewPendingOverlaps, bDoNotifies, OverlapsAtEndLocation);
+	return bCanSkipUpdateOverlaps;
+}
+
+bool UWorldEditorComponent::OverlapComponent(const FVector& Pos, const FQuat& Rot, const FCollisionShape& CollisionShape) const
+{
+	bool bHit = Super::OverlapComponent(Pos, Rot, CollisionShape);
+
+
+	return bHit;
+}
+
+FVector UWorldEditorComponent::GetExtent() const
+{
+	float Interval = FMath::Max(GridSize, 1.0F);
+	int32 X, Y, Z;
+
+	X = static_cast<int32>(Extent.X / Interval);
+	Y = static_cast<int32>(Extent.Y / Interval);
+	Z = static_cast<int32>(Extent.Z / Interval);
+
+	return FVector(X * Interval, Y * Interval, Z * Interval);
 }

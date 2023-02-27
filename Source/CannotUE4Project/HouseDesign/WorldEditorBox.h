@@ -14,6 +14,9 @@ public:
 
 	// AActor interface
 	virtual void PreInitializeComponents() override;
+	virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
+	virtual void Tick(float DeltaSeconds) override;
+	virtual bool ShouldTickIfViewportsOnly() const override { return true; }
 	// End of AActor interface
 
 protected:
@@ -22,16 +25,14 @@ protected:
 	virtual void BeginPlay() override;
 	// End of AActor interface
 
-public:	
+private:
+
 	
-	// AActor interface
-	virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
-	virtual bool ShouldTickIfViewportsOnly() const override { return true; }
-	// End of AActor interface
+	
 
 protected:
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = Component)
 	TObjectPtr<class UWorldEditorComponent> WorldEditorComponent;
 
 };
