@@ -1,8 +1,12 @@
 #include "WorldEditorComponent.h"
 
+#if WITH_EDITOR
 #include "PrimitiveSceneProxy.h"
 #include "DynamicMeshBuilder.h"
+#endif
 
+#include "WorldEditorOctree.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 #if WITH_EDITOR
 
@@ -318,6 +322,7 @@ private:
 	float DashSize;
 	float GridSize;
 };
+
 #endif
 
 //! UWorldEditorComponent
@@ -336,6 +341,20 @@ FBoxSphereBounds UWorldEditorComponent::CalcBounds(const FTransform& LocalToWorl
 
 #endif
 
+void UWorldEditorComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	FVector OctreeExtent = GetExtent();
+	Octree = new FWorldEditorOctree(GetRelativeLocation() + FVector(0.0F, 0.0F, OctreeExtent.GetMax() / 2.0F), OctreeExtent.GetMax() / 2.0F);
+}
+
+void UWorldEditorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Octree->Destroy();
+	Super::EndPlay(EndPlayReason);
+}
+
 
 bool UWorldEditorComponent::UpdateOverlapsImpl(const TOverlapArrayView* NewPendingOverlaps, bool bDoNotifies, const TOverlapArrayView* OverlapsAtEndLocation)
 {
@@ -351,6 +370,60 @@ bool UWorldEditorComponent::OverlapComponent(const FVector& Pos, const FQuat& Ro
 	return bHit;
 }
 
+void UWorldEditorComponent::DrawOctree()
+{
+	if (!Octree)
+	{	//! Not initialize!
+		return;
+	}
+
+	Octree->FindNodesWithPredicate(
+		[](FWorldEditorOctree::FNodeIndex ParentNodeIndex, FWorldEditorOctree::FNodeIndex CurrentNodeIndex, const FBoxCenterAndExtent& NodeBounds)
+		{
+			return true;
+		},
+		[this](FWorldEditorOctree::FNodeIndex ParentNodeIndex, FWorldEditorOctree::FNodeIndex CurrentNodeIndex, const FBoxCenterAndExtent& NodeBounds)
+		{
+			FVector Extent = NodeBounds.Extent;
+			FVector Center = NodeBounds.Center;
+
+			DrawDebugBox(GetWorld(), Center, Extent, FColor().Blue, false, 0.0f);
+
+			for (const FWorldEditorOctreeElement& Element : Octree->GetElementsForNode(CurrentNodeIndex))
+			{
+				if (nullptr == Element.Actor || !IsValid(Element.Actor))
+				{
+					continue;
+				}
+				DrawDebugBox(GetWorld(), Element.Actor->GetActorLocation(), Element.BoxCenterAndExtent.Extent, FColor().Yellow, false, 0.0f);
+			}
+		}
+	);
+}
+
+void UWorldEditorComponent::AddElement(AActor* InActor)
+{
+	if (!Octree)
+	{	//! Not initialize!
+		return;
+	}
+
+	if (nullptr == InActor || !IsValid(InActor))
+	{
+		return;
+	}
+
+	FVector ActorOrigin;
+	FVector ActorExtent;
+	InActor->GetActorBounds(false, ActorOrigin, ActorExtent);
+
+	if (ActorExtent.GetMax() < Octree->GetRootBounds().GetBox().GetExtent().GetMax())
+	{
+		FWorldEditorOctreeElement Element(FBoxCenterAndExtent(ActorOrigin, ActorExtent), InActor);
+		Octree->AddElement(Element);
+	}
+}
+
 FVector UWorldEditorComponent::GetExtent() const
 {
 	float Interval = FMath::Max(GridSize, 1.0F);
@@ -361,4 +434,9 @@ FVector UWorldEditorComponent::GetExtent() const
 	Z = static_cast<int32>(Extent.Z / Interval);
 
 	return FVector(X * Interval, Y * Interval, Z * Interval);
+}
+
+FVector UWorldEditorComponent::Origin() const
+{
+	return GetRelativeLocation() + FVector(0.0f, 0.0F, GetExtent().Z / 2.0F);
 }

@@ -3,9 +3,9 @@
 #include "Components/PrimitiveComponent.h"
 #include "WorldEditorComponent.generated.h"
 
-/**
- * 
- */
+using FWorldEditorOctree = TOctree2<struct FWorldEditorOctreeElement, struct FWorldEditorOctreeSematics>;
+
+
 UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
 class CANNOTUE4PROJECT_API UWorldEditorComponent : public UPrimitiveComponent
 {
@@ -19,12 +19,23 @@ public:
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 #endif
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual bool UpdateOverlapsImpl(const TOverlapArrayView* NewPendingOverlaps = nullptr, bool bDoNotifies = true, const TOverlapArrayView* OverlapsAtEndLocation = nullptr) override;
 	virtual bool OverlapComponent(const FVector& Pos, const FQuat& Rot, const FCollisionShape& CollisionShape) const override;
 	// End of UPrimitiveComponent interface
 
+	UFUNCTION(BlueprintCallable, Category = Debug, meta = (DevelopmentOnly))
+	void DrawOctree();
+
+	UFUNCTION(BlueprintCallable)
+	void AddElement(AActor* InActor);
+
 	UFUNCTION(BlueprintGetter)
 	FVector GetExtent() const;
+
+	UFUNCTION(BlueprintPure)
+	FVector Origin() const;
 
 	UFUNCTION(BlueprintGetter)
 	float GetGridSize() const
@@ -55,5 +66,5 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Draw, BlueprintGetter = GetExtent)
 	FVector Extent{ 1000.0F, 1000.0F, 1000.0F };
 
-	//TOctree2<TObjectPtr<AActor>> OctZone;
+	TObjectPtr<FWorldEditorOctree> Octree;
 };

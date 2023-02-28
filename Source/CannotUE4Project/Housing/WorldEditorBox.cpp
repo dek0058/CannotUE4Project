@@ -47,7 +47,15 @@ void AWorldEditorBox::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	if (WorldEditorComponent)
+	{
+		WorldEditorComponent->DrawOctree();
+	}
+}
 
+FVector AWorldEditorBox::WorldToBoxPosition(FVector WorldPosition)
+{
+	return GetActorLocation();
 }
 
 void AWorldEditorBox::BeginPlay()

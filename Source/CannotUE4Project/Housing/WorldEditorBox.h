@@ -19,6 +19,9 @@ public:
 	virtual bool ShouldTickIfViewportsOnly() const override { return true; }
 	// End of AActor interface
 
+	UFUNCTION(BlueprintPure, Category = Utility)
+	FVector WorldToBoxPosition(FVector LocalPosition);
+
 protected:
 	
 	// AActor interface
@@ -32,7 +35,7 @@ private:
 
 protected:
 
-	UPROPERTY(VisibleAnywhere, Category = Component)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Component)
 	TObjectPtr<class UWorldEditorComponent> WorldEditorComponent;
 
 };
