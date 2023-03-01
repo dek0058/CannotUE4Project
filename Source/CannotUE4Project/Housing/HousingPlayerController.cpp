@@ -28,6 +28,7 @@ void AHousingPlayerController::SetHousingMode(EHousingModeType Type)
 		{
 			MyPawn->SetFreedom(false);
 			MyPawn->SetPosition(FVector::ZeroVector);
+			MyPawn->SetActorRotation(FRotator::ZeroRotator);
 		}
 			break;
 	}

@@ -10,7 +10,3 @@ void AHousingGameMode::PostLogin(APlayerController* NewPlayer)
 
 }
 
-void AHousingGameMode::SelectWorldEditorBox(AActor* WorldEditorBox)
-{
-	CurrentWorldEditorBox = Cast<AWorldEditorBox>(WorldEditorBox);
-}
