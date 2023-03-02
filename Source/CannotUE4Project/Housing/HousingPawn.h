@@ -40,6 +40,8 @@ protected:
 private:
 
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UCharacterMovementComponent> HousingMovementComponent;
+	TObjectPtr<class UPawnMovementComponent> HousingMovementComponent;
+
+	//TObjectPtr<ArrowComp>
 
 };

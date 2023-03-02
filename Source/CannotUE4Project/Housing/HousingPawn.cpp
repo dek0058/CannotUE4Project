@@ -1,8 +1,8 @@
 #include "HousingPawn.h"
 #include "WorldEditorBox.h"
 
-#include "GameFramework/CharacterMovementComponent.h"
-
+#include "GameFramework/PawnMovementComponent.h"
+#include "GameFramework/FloatingPawnMovement.h"
 
 // Sets default values
 AHousingPawn::AHousingPawn()
@@ -11,8 +11,9 @@ AHousingPawn::AHousingPawn()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(RootName);
 
 	FName MovementComponentName = TEXT("HousingMovementComponent");
-	HousingMovementComponent = CreateDefaultSubobject<UCharacterMovementComponent>(MovementComponentName);
-	HousingMovementComponent->UpdatedComponent = RootComponent;
+	HousingMovementComponent = CreateDefaultSubobject<UPawnMovementComponent, UFloatingPawnMovement>(MovementComponentName);
+	HousingMovementComponent->SetUpdatedComponent(RootComponent);
+
 
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	//PrimaryActorTick.bCanEverTick = true;
