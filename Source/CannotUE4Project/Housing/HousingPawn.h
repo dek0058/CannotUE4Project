@@ -24,15 +24,22 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetPosition(FVector Position);
 
+	void AddMovementAxis(FVector Axis);
+
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class AWorldEditorBox> MyWorldEditorBox;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
-	FVector InputMovementDirection{ 0.0F, 0.0F, 0.0F };
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
+	FVector MovementDirection{ 0.0F, 0.0F, 0.0F };
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Housing)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
 	bool bFreedom = true;
+
+private:
+
+	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UCharacterMovementComponent> HousingMovementComponent;
 
 };

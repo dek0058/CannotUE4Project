@@ -4,6 +4,35 @@
 #include "WorldEditorBox.h"
 
 
+AHousingPlayerController::AHousingPlayerController()
+{
+}
+
+void AHousingPlayerController::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction)
+{
+	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
+
+	switch (TickType)
+	{
+		case LEVELTICK_TimeOnly:
+			break;
+
+		case LEVELTICK_ViewportsOnly:
+			break;
+
+		case LEVELTICK_All:
+		{
+			OnPawnMovement();
+		}
+			break;
+
+		case LEVELTICK_PauseTick:
+			break;
+	}
+}
+
+
+
 void AHousingPlayerController::SetWorldEditorBox(class AWorldEditorBox* WorldEditorBox)
 {
 	SelectedWorldEditorBox = WorldEditorBox;
@@ -11,7 +40,7 @@ void AHousingPlayerController::SetWorldEditorBox(class AWorldEditorBox* WorldEdi
 
 void AHousingPlayerController::SetHousingMode(EHousingModeType Type)
 {
-	if (HousingModeType == Type)
+	if (ModeType == Type)
 	{
 		return;
 	}
@@ -34,10 +63,15 @@ void AHousingPlayerController::SetHousingMode(EHousingModeType Type)
 	}
 
 
-	HousingModeType = Type;
+	ModeType = Type;
 
 }
 
+void AHousingPlayerController::SetInputMovement(FVector2f Axis)
+{
+	InputData.MovementAxis.X = FMath::Clamp(Axis.X, -1.0F, 1.0F);
+	InputData.MovementAxis.Y = FMath::Clamp(Axis.Y, -1.0F, 1.0F);
+}
 
 void AHousingPlayerController::OnPossess(APawn* aPawn)
 {
@@ -51,4 +85,15 @@ void AHousingPlayerController::OnPossess(APawn* aPawn)
 	}
 
 	SetHousingMode(EHousingModeType::Editor);
+}
+
+void AHousingPlayerController::OnPawnMovement()
+{
+	AHousingPawn* MyPawn = GetPawn<AHousingPawn>();
+	if (MyPawn == nullptr && !IsValid(MyPawn))
+	{
+		return;
+	}
+
+	MyPawn->AddMovementAxis(InputData.MovementAxis);
 }
