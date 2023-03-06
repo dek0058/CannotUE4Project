@@ -1,4 +1,4 @@
-#include "HousingProp.h"
+﻿#include "HousingProp.h"
 
 
 AHousingProp::AHousingProp()

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "GameFramework/PlayerController.h"
 #include "HousingPlayerController.generated.h"
@@ -50,7 +50,7 @@ protected:
 	virtual void OnPossess(APawn* aPawn) override;
 	// End of AActor interface
 
-	/** ÀÔ·Â ¹ÞÀº °ªÀ¸·Î ÆùÀ» ¿òÁ÷ÀÔ´Ï´Ù. */
+	/** ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½. */
 	void OnPawnMovement();
 	
 protected:

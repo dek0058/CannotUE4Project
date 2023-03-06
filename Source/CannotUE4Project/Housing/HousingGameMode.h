@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "GameFramework/GameModeBase.h"
 #include "HousingGameMode.generated.h"
 

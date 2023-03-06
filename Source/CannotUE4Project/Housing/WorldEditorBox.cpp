@@ -1,17 +1,17 @@
-#include "WorldEditorBox.h"
+﻿#include "WorldEditorBox.h"
 
 #include "Components/LineBatchComponent.h"
 
 #include "WorldEditorComponent.h"
 
 
+FName AWorldEditorBox::RootName = TEXT("RootComponent");
+FName AWorldEditorBox::WorldEditorComponentName = TEXT("WorldEditorComponent");
+
 AWorldEditorBox::AWorldEditorBox()
 {
-	//! Create UObject
-	FName RootName = TEXT("RootComponent");
 	RootComponent = CreateDefaultSubobject<USceneComponent>(RootName);
 
-	FName WorldEditorComponentName = TEXT("WorldEditorComponent");
 	WorldEditorComponent = CreateDefaultSubobject<UWorldEditorComponent>(WorldEditorComponentName);
 	WorldEditorComponent->SetupAttachment(RootComponent);
 
@@ -56,6 +56,11 @@ void AWorldEditorBox::Tick(float DeltaSeconds)
 FVector AWorldEditorBox::WorldToBoxPosition(FVector WorldPosition)
 {
 	return GetActorLocation();
+}
+
+bool AWorldEditorBox::IsInWorld(FVector WorldPosition) const
+{
+	return WorldEditorComponent->IsInWorld(WorldPosition);
 }
 
 void AWorldEditorBox::BeginPlay()

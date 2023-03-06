@@ -1,4 +1,4 @@
-#include "WorldEditorComponent.h"
+﻿#include "WorldEditorComponent.h"
 
 #if WITH_EDITOR
 #include "PrimitiveSceneProxy.h"
@@ -345,6 +345,8 @@ void UWorldEditorComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	Box = FBox{ FVector{-Extent.X, -Extent.Y, 0.0F}, Extent };
+
 	FVector OctreeExtent = GetExtent();
 	Octree = new FWorldEditorOctree(GetRelativeLocation() + FVector(0.0F, 0.0F, OctreeExtent.GetMax() / 2.0F), OctreeExtent.GetMax() / 2.0F);
 }
@@ -439,4 +441,9 @@ FVector UWorldEditorComponent::GetExtent() const
 FVector UWorldEditorComponent::Origin() const
 {
 	return GetRelativeLocation() + FVector(0.0f, 0.0F, GetExtent().Z / 2.0F);
+}
+
+bool UWorldEditorComponent::IsInWorld(FVector WorldPosition) const
+{
+	return Box.IsInside(WorldPosition);
 }

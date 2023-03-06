@@ -1,6 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
@@ -26,9 +24,15 @@ public:
 
 	void AddMovementAxis(FVector Axis);
 
+public:
+
+	static FName RootName;
+	static FName UserSceneComponentName;
+	static FName HousingMovementComponentName;
+
 protected:
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Field)
 	TObjectPtr<class AWorldEditorBox> MyWorldEditorBox;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
@@ -39,7 +43,11 @@ protected:
 
 private:
 
-	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	/** 유저가 실제 느끼는 좌표계를 가진 컴포넌트 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Transformation, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USceneComponent> UserSceneComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UPawnMovementComponent> HousingMovementComponent;
 
 	//TObjectPtr<ArrowComp>

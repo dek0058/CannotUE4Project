@@ -1,21 +1,25 @@
-#include "HousingPawn.h"
+﻿#include "HousingPawn.h"
 #include "WorldEditorBox.h"
 
 #include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 
-// Sets default values
+
+
+FName AHousingPawn::RootName = TEXT("RootComponent");
+FName AHousingPawn::UserSceneComponentName = TEXT("UserSceneComponent");
+FName AHousingPawn::HousingMovementComponentName = TEXT("HousingMovementComponent");
+
 AHousingPawn::AHousingPawn()
 {
-	FName RootName = TEXT("RootComponent");
 	RootComponent = CreateDefaultSubobject<USceneComponent>(RootName);
 
-	FName MovementComponentName = TEXT("HousingMovementComponent");
-	HousingMovementComponent = CreateDefaultSubobject<UPawnMovementComponent, UFloatingPawnMovement>(MovementComponentName);
+	UserSceneComponent = CreateDefaultSubobject<USceneComponent>(UserSceneComponentName);
+	UserSceneComponent->SetupAttachment(RootComponent);
+
+	HousingMovementComponent = CreateDefaultSubobject<UPawnMovementComponent, UFloatingPawnMovement>(HousingMovementComponentName);
 	HousingMovementComponent->SetUpdatedComponent(RootComponent);
 
-
-	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	//PrimaryActorTick.bCanEverTick = true;
 
 }
@@ -27,7 +31,7 @@ void AHousingPawn::SetWorldEditorBox(class AWorldEditorBox* WorldEditorBox)
 
 void AHousingPawn::SetFreedom(bool bActive)
 {
-
+	bFreedom = bActive;
 }
 
 void AHousingPawn::SetPosition(FVector WorldPosition)
@@ -48,5 +52,49 @@ void AHousingPawn::AddMovementAxis(FVector Axis)
 		return;
 	}
 
-	MovementComponent->AddInputVector(Axis, true);
+	FVector Result{ 0.0F, 0.0F, 0.0F };
+
+	if (Axis.Y > 0)
+	{
+		Result = UserSceneComponent->GetForwardVector();
+	}
+	else if (Axis.Y < 0)
+	{
+		Result = -UserSceneComponent->GetForwardVector();
+	}
+
+	if (Axis.X > 0)
+	{
+		Result += UserSceneComponent->GetRightVector();
+	}
+	else if (Axis.X < 0)
+	{
+		Result -= UserSceneComponent->GetRightVector();
+	}
+
+	if (MyWorldEditorBox)
+	{
+		if (bFreedom)
+		{
+			if (!MyWorldEditorBox->IsInWorld(GetActorLocation()))
+			{
+				// FIXME: 수정필요
+				Result = FVector::ZeroVector;
+			}
+			else
+			{
+				MovementComponent->AddInputVector(Result, true);
+			}
+		}
+		else
+		{
+
+		}
+		//RootComponent->GetComponentVelocity()
+		//MovementComponent->ConsumeInputVector
+	}
+	else
+	{
+		MovementComponent->AddInputVector(Result, true);
+	}
 }
